@@ -1,0 +1,42 @@
+package route
+
+import (
+	"html/template"
+
+	"github.com/Grafiters/archive/configs"
+	customerHttp "github.com/Grafiters/archive/internal/customer/delivery"
+	customerMysql "github.com/Grafiters/archive/internal/customer/repository"
+	customerUsecase "github.com/Grafiters/archive/internal/customer/usecase"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/swagger"
+)
+
+func SetupRouter() *fiber.App {
+	app := fiber.New()
+	app.Use(logger.New())
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+	}))
+
+	app.Get("/api/openapi/*", swagger.New(swagger.Config{
+		Title:  "Skill Test Pertama - Bayu Grafit Nur Alfian",
+		Layout: "BaseLayout",
+		Plugins: []template.JS{
+			template.JS(`SwaggerUIBundle.plugins.DownloadUrl`),
+		},
+		CustomStyle: template.CSS(`
+			@import url('https://cdn.jsdelivr.net/npm/swagger-themes@1.4.3/themes/dark.css');
+		`),
+	}))
+
+	userRepo := customerMysql.NewCustomerRepository(configs.DataBase, configs.Logger)
+	userUsecase := customerUsecase.NewCustomerUsecase(userRepo, configs.Logger)
+	customerHttp.NewCustomerHandler(app, userUsecase, configs.Logger)
+
+	return app
+}

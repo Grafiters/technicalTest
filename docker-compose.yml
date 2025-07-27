@@ -1,0 +1,35 @@
+# version: '3.8'
+
+services:
+  db:
+    image: postgres:13-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: Admin
+      POSTGRES_PASSWORD: Admin123!*
+    networks:
+      - app_network
+  adminer:
+    image: adminer
+    restart: always
+    depends_on: 
+      - db
+    ports:
+      - 8081:8080
+    networks:
+      - app_network
+  api:
+    image: "transaction:0.0.1"
+    restart: always
+    env_file:
+      - ./file.env
+    ports:
+      - "8080:8080"
+    command: "./api"
+    networks:
+      - app_network
+networks:
+  app_network:
+    driver: bridge

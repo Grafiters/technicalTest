@@ -1,0 +1,327 @@
+basePath: /
+definitions:
+  domain.CustomerResponse:
+    properties:
+      bik:
+        type: integer
+      birth_date:
+        type: string
+      birth_place:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      ktp_image_url:
+        type: string
+      legal_name:
+        type: string
+      limit:
+        items:
+          $ref: '#/definitions/domain.LimitResponse'
+        type: array
+      salary:
+        type: integer
+      selfie_image_url:
+        type: string
+    type: object
+  domain.CustomerUpdate:
+    properties:
+      birth_date:
+        type: string
+      birth_place:
+        type: string
+      email:
+        example: test@gmail.com
+        type: string
+      full_name:
+        type: string
+      ktp_image:
+        type: string
+      legal_name:
+        type: string
+      selfie_image:
+        type: string
+    required:
+    - birth_date
+    - birth_place
+    - email
+    - full_name
+    - ktp_image
+    - legal_name
+    - selfie_image
+    type: object
+  domain.CustomerUpdateSalary:
+    properties:
+      salary:
+        type: integer
+    required:
+    - salary
+    type: object
+  domain.LimitResponse:
+    properties:
+      amount:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      tenors:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  domain.SingleResponse:
+    properties:
+      code:
+        description: number
+        type: integer
+      data:
+        description: single data
+      message:
+        description: string
+        type: string
+    type: object
+  domain.UserInput:
+    properties:
+      email:
+        example: test@gmail.com
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  domain.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      uid:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: 127.0.0.1:8080
+info:
+  contact:
+    email: ryudelta7@gmail.com
+    name: Ryudelta Support
+    url: https://t.me/Grafiters
+  description: This is a sample server for a Fiber application.
+  termsOfService: http://swagger.io/terms/
+  title: Fiber Swagger Example API
+  version: "1.0"
+paths:
+  /api/customer/get:
+    get:
+      consumes:
+      - application/json
+      description: Get Customer data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.CustomerResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      summary: Get Customer
+      tags:
+      - Customers
+  /api/customer/update:
+    put:
+      consumes:
+      - application/json
+      description: Update Customer data for non crucial data
+      parameters:
+      - description: customer to create
+        in: body
+        name: customer
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CustomerUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.CustomerResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      summary: Update Customer
+      tags:
+      - Customers
+  /api/customer/update/salary:
+    put:
+      consumes:
+      - application/json
+      description: Update Customer data for non crucial data
+      parameters:
+      - description: customer to create
+        in: body
+        name: customer
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CustomerUpdateSalary'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.CustomerResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      summary: Update Customer
+      tags:
+      - Customers
+  /api/users/create:
+    post:
+      consumes:
+      - application/json
+      description: Create user data
+      parameters:
+      - description: User to create
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.UserResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      summary: Create User
+      tags:
+      - Users
+  /api/users/get/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get users data by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.UserResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      summary: Get User by id
+      tags:
+      - Users
+  /api/users/get/email/{email}:
+    get:
+      consumes:
+      - application/json
+      description: Get users data by email
+      parameters:
+      - description: email
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.UserResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      summary: Get User by email
+      tags:
+      - Users
+schemes:
+- http
+- https
+securityDefinitions:
+  Token:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
