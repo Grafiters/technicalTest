@@ -8,6 +8,7 @@ const (
 	MissingRequiredData        = "Missing required data"
 	ProsessError               = "processing error, please contact your admin"
 	AuthorizationBearerMissing = "Authorizaitio Bearer Missing"
+	PasswordInvalid            = "Invalid password"
 	SignatureMissing           = "Signature is Missing"
 	JwtDecodeAndVerify         = "Invalid Decode and Verify JWT"
 	InvalidQueryParams         = "Invalid Query Params"

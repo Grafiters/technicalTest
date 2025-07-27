@@ -10,7 +10,7 @@ type Customer struct {
 	ID             int64     `json:"id" gorm:"column:id;type:bigserial;primaryKey;autoIncrement"`
 	Email          string    `json:"email" gorm:"unique" validate:"required"`
 	Password       string    `json:"password"`
-	NIK            int       `json:"bik"`
+	NIK            int       `json:"nik"`
 	FullName       string    `json:"full_name"`
 	LegalName      string    `json:"legal_name"`
 	BirthPlace     string    `json:"birth_place"`
@@ -51,7 +51,7 @@ type CustomerUpdateSalary struct {
 type CustomerResponse struct {
 	ID             int64     `json:"id"`
 	Email          string    `json:"email"`
-	NIK            int       `json:"bik"`
+	NIK            int       `json:"nik"`
 	FullName       string    `json:"full_name"`
 	LegalName      string    `json:"legal_name"`
 	BirthPlace     string    `json:"birth_place"`

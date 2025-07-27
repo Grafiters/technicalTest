@@ -20,6 +20,64 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/auth": {
+            "post": {
+                "description": "Generate access token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Session",
+                "parameters": [
+                    {
+                        "description": "generate access token",
+                        "name": "auth",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.AuthRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/domain.SingleResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.TokenResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/customer/get": {
             "get": {
                 "description": "Get Customer data",
@@ -183,9 +241,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/create": {
+        "/api/register": {
             "post": {
-                "description": "Create user data",
+                "description": "Register to system",
                 "consumes": [
                     "application/json"
                 ],
@@ -193,17 +251,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Auth"
                 ],
-                "summary": "Create User",
+                "summary": "Register",
                 "parameters": [
                     {
-                        "description": "User to create",
-                        "name": "user",
+                        "description": "register to system",
+                        "name": "auth",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.UserInput"
+                            "$ref": "#/definitions/domain.RegisterRequest"
                         }
                     }
                 ],
@@ -219,110 +277,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/domain.UserResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/domain.SingleResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/domain.SingleResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/users/get/email/{email}": {
-            "get": {
-                "description": "Get users data by email",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Get User by email",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "email",
-                        "name": "email",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/domain.SingleResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/domain.UserResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/domain.SingleResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/domain.SingleResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/users/get/{id}": {
-            "get": {
-                "description": "Get users data by id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Get User by id",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/domain.SingleResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/domain.UserResponse"
+                                            "$ref": "#/definitions/domain.CustomerResponse"
                                         }
                                     }
                                 }
@@ -346,12 +301,24 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "domain.AuthRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.CustomerResponse": {
             "type": "object",
             "properties": {
-                "bik": {
-                    "type": "integer"
-                },
                 "birth_date": {
                     "type": "string"
                 },
@@ -381,6 +348,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/domain.LimitResponse"
                     }
+                },
+                "nik": {
+                    "type": "integer"
                 },
                 "salary": {
                     "type": "integer"
@@ -457,6 +427,21 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.SingleResponse": {
             "type": "object",
             "properties": {
@@ -473,38 +458,10 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.UserInput": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "test@gmail.com"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "domain.UserResponse": {
+        "domain.TokenResponse": {
             "type": "object",
             "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "uid": {
-                    "type": "string"
-                },
-                "updated_at": {
+                "access_token": {
                     "type": "string"
                 }
             }

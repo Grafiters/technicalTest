@@ -1,9 +1,17 @@
 basePath: /
 definitions:
+  domain.AuthRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   domain.CustomerResponse:
     properties:
-      bik:
-        type: integer
       birth_date:
         type: string
       birth_place:
@@ -24,6 +32,8 @@ definitions:
         items:
           $ref: '#/definitions/domain.LimitResponse'
         type: array
+      nik:
+        type: integer
       salary:
         type: integer
       selfie_image_url:
@@ -75,6 +85,16 @@ definitions:
       updated_at:
         type: string
     type: object
+  domain.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   domain.SingleResponse:
     properties:
       code:
@@ -86,28 +106,9 @@ definitions:
         description: string
         type: string
     type: object
-  domain.UserInput:
+  domain.TokenResponse:
     properties:
-      email:
-        example: test@gmail.com
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  domain.UserResponse:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: integer
-      uid:
-        type: string
-      updated_at:
+      access_token:
         type: string
     type: object
 host: 127.0.0.1:8080
@@ -121,6 +122,41 @@ info:
   title: Fiber Swagger Example API
   version: "1.0"
 paths:
+  /api/auth:
+    post:
+      consumes:
+      - application/json
+      description: Generate access token
+      parameters:
+      - description: generate access token
+        in: body
+        name: auth
+        required: true
+        schema:
+          $ref: '#/definitions/domain.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.TokenResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      summary: Session
+      tags:
+      - Auth
   /api/customer/get:
     get:
       consumes:
@@ -219,18 +255,18 @@ paths:
       summary: Update Customer
       tags:
       - Customers
-  /api/users/create:
+  /api/register:
     post:
       consumes:
       - application/json
-      description: Create user data
+      description: Register to system
       parameters:
-      - description: User to create
+      - description: register to system
         in: body
-        name: user
+        name: auth
         required: true
         schema:
-          $ref: '#/definitions/domain.UserInput'
+          $ref: '#/definitions/domain.RegisterRequest'
       produces:
       - application/json
       responses:
@@ -241,7 +277,7 @@ paths:
             - $ref: '#/definitions/domain.SingleResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/domain.UserResponse'
+                  $ref: '#/definitions/domain.CustomerResponse'
               type: object
         "422":
           description: Unprocessable Entity
@@ -251,71 +287,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
-      summary: Create User
+      summary: Register
       tags:
-      - Users
-  /api/users/get/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Get users data by id
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/domain.SingleResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/domain.UserResponse'
-              type: object
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/domain.SingleResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/domain.SingleResponse'
-      summary: Get User by id
-      tags:
-      - Users
-  /api/users/get/email/{email}:
-    get:
-      consumes:
-      - application/json
-      description: Get users data by email
-      parameters:
-      - description: email
-        in: path
-        name: email
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/domain.SingleResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/domain.UserResponse'
-              type: object
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/domain.SingleResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/domain.SingleResponse'
-      summary: Get User by email
-      tags:
-      - Users
+      - Auth
 schemes:
 - http
 - https
