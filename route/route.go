@@ -26,7 +26,6 @@ func SetupRouter() *fiber.App {
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
 	}))
 
 	app.Get("/api/openapi/*", swagger.New(swagger.Config{
