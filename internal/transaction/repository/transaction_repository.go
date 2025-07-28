@@ -22,17 +22,7 @@ func NewTranscationRepository(
 	return &mysqlTransactionRepository{db, logger}
 }
 
-func (m *mysqlTransactionRepository) Create(UserID int64, data *domain.TransactionInput) (*domain.Transaction, error) {
-	newTransaction := &domain.Transaction{
-		LimitID:     data.LimitID,
-		CustomerID:  UserID,
-		ContractNo:  data.ContractNo,
-		OTR:         data.OTR,
-		AdminFee:    data.AdminFee,
-		Installment: data.Installment,
-		AssetName:   data.AssetName,
-		Status:      "active",
-	}
+func (m *mysqlTransactionRepository) Create(UserID int64, data *domain.Transaction) (*domain.Transaction, error) {
 
 	totalAmount := data.OTR + data.AdminFee + data.Installment
 
@@ -47,7 +37,7 @@ func (m *mysqlTransactionRepository) Create(UserID int64, data *domain.Transacti
 			return fmt.Errorf("insufficient limit: need %d, available %d", totalAmount, limit.Amount)
 		}
 
-		if err := tx.Create(newTransaction).Error; err != nil {
+		if err := tx.Create(data).Error; err != nil {
 			return err
 		}
 
@@ -62,7 +52,7 @@ func (m *mysqlTransactionRepository) Create(UserID int64, data *domain.Transacti
 		return nil, err
 	}
 
-	return newTransaction, nil
+	return data, nil
 }
 
 func (m *mysqlTransactionRepository) Get(UserId int64, filter *domain.TransactionFilter) ([]*domain.Transaction, int, error) {
@@ -70,14 +60,18 @@ func (m *mysqlTransactionRepository) Get(UserId int64, filter *domain.Transactio
 		transaction      []*domain.Transaction
 		totalSize        int64
 		whereQuery, args = getWhereClause(filter)
-		orderClause      = domain.GetOrderClause(filter.Sort)
 	)
 
-	query := m.db.Where(whereQuery, args...).Order(orderClause)
+	query := m.db.Where("customer_id = ?", UserId)
 
-	if err := query.Model(&domain.Customer{}).Count(&totalSize).Error; err != nil {
-		m.logger.Error("failed to count query customer, err: %+v", err)
-		return nil, 0, err
+	if whereQuery != "" {
+		query = query.Where(whereQuery, args...)
+	}
+
+	err := query.Model(&domain.Transaction{}).Count(&totalSize)
+	if err.Error != nil {
+		m.logger.Error("failed to count query transaction, err: ", err)
+		return nil, 0, err.Error
 	}
 
 	if totalSize == 0 {
@@ -85,9 +79,10 @@ func (m *mysqlTransactionRepository) Get(UserId int64, filter *domain.Transactio
 	}
 
 	// ambil data dengan pagination
-	if err := query.Limit(filter.PageSize).Offset(filter.Page).Find(&transaction).Error; err != nil {
-		m.logger.Error("failed to query customer, err: %+v", err)
-		return nil, 0, err
+	err = query.Limit(filter.PageSize).Offset(filter.Page).Find(&transaction)
+	if err.Error != nil {
+		m.logger.Error("failed to get query transaction, err: ", err)
+		return nil, 0, err.Error
 	}
 
 	return transaction, int(totalSize), nil
@@ -97,12 +92,10 @@ func (m *mysqlTransactionRepository) GetByID(ID int64) (*domain.Transaction, err
 		transaction *domain.Transaction
 	)
 
-	query := m.db.Where("id = ?", ID)
-
-	// ambil data dengan pagination
-	if err := query.First(&transaction).Error; err != nil {
-		m.logger.Error("failed to query customer, err: %+v", err)
-		return nil, err
+	err := m.db.Where("id = ?", ID).First(&transaction)
+	if err.Error != nil {
+		m.logger.Error("failed to query transaction, err: %+v", err)
+		return nil, err.Error
 	}
 
 	return transaction, nil
@@ -125,9 +118,10 @@ func (m *mysqlTransactionRepository) GetInstallmentLogs(ID int64) ([]*domain.Ins
 	var installmentLog []*domain.InstallmentLog
 	query := m.db.Where("transaction_id = ?", ID)
 
-	if err := query.Find(&installmentLog).Error; err != nil {
+	err := query.Find(&installmentLog)
+	if err.Error != nil {
 		m.logger.Error("failed to get data installment log, err: %+v", err)
-		return nil, err
+		return nil, err.Error
 	}
 
 	return installmentLog, nil
@@ -142,7 +136,7 @@ func (m *mysqlTransactionRepository) PayOff(ID int64) (*domain.Transaction, erro
 			return fmt.Errorf("transaction not found or already paid: %w", err)
 		}
 
-		if err := tx.Model(&transaction).Update("status", "paid_off").Error; err != nil {
+		if err := tx.Model(&transaction).Where("id = ?", transaction.ID).Update("status", "paid_off").Error; err != nil {
 			return err
 		}
 
@@ -188,15 +182,17 @@ func (m *mysqlTransactionRepository) BulkInsertInstallment(ID int64, data *domai
 func (m *mysqlTransactionRepository) BulkUpdateInstallment(ID int64, data *domain.BulkInstallmentUpdate) ([]*domain.InstallmentLog, error) {
 	for _, val := range data.InstallmentUpdae {
 		err := m.db.Transaction(func(tx *gorm.DB) error {
-			if err := tx.Update("paid_at = ?", val.PaidAt).Where("transaction_id = ? AND month = ?", ID, val.DueDate, val.Amount).Error; err != nil {
-				return err
+			result := tx.Model(&domain.InstallmentLog{}).Where("transaction_id = ? AND month = ?", data.TransactionID, val.Month).Update("paid_at", val.PaidAt)
+
+			if result.Error != nil {
+				return result.Error
 			}
 
 			return nil
 		})
 
 		if err != nil {
-			m.logger.Error("failed to create installment log, err: %+v", err)
+			m.logger.Error("failed to update installment log, err: %+v", err)
 			return nil, err
 		}
 	}

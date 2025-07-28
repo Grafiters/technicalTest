@@ -5,6 +5,7 @@ import (
 
 	"github.com/Grafiters/archive/configs"
 	"github.com/Grafiters/archive/internal/domain"
+	"github.com/Grafiters/archive/middleware"
 	"github.com/Grafiters/archive/utils"
 	"github.com/gofiber/fiber/v2"
 )
@@ -24,10 +25,10 @@ func NewTransactionHandler(
 		logger:             logger,
 	}
 
-	router.Get("/transaction/get", h.Get)
-	router.Get("/transaction/get/:id", h.GetByID)
-	router.Post("/transaction/create", h.Create)
-	router.Put("/transaction/installment/pay", h.PayOff)
+	router.Get("/transaction/get", middleware.Authenticate, h.Get)
+	router.Get("/transaction/get/:id", middleware.Authenticate, h.GetByID)
+	router.Post("/transaction/create", middleware.Authenticate, h.Create)
+	router.Post("/transaction/installment/pay", middleware.Authenticate, h.PayOff)
 }
 
 // Transactions
@@ -35,6 +36,7 @@ func NewTransactionHandler(
 // @Summary Get Transaction
 // @Description Get Transaction data
 // @Tags Transactions
+// @Security Token
 // @Accept  json
 // @Produce  json
 // @Params transaction query domain.TransactionFilter false "filter for transaction"
@@ -57,7 +59,7 @@ func (th *transactionHandler) Get(c *fiber.Ctx) error {
 	}
 
 	if params.Page == 0 {
-		params.Page = 10
+		params.Page = 0
 	}
 
 	transaction, totalSize, err := th.transactionUsecase.Get(c, CurrentUser.ID, params)
@@ -80,10 +82,11 @@ func (th *transactionHandler) Get(c *fiber.Ctx) error {
 }
 
 // Transactions
-// @Router /api/transaction/update [post]
+// @Router /api/transaction/create [post]
 // @Summary Transaction
 // @Description Create Transaction data for non crucial data
 // @Tags Transactions
+// @Security Token
 // @Accept  json
 // @Produce  json
 // @Param transaction body domain.TransactionInput true "transaction to create"
@@ -115,7 +118,7 @@ func (th *transactionHandler) Create(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(domain.SingleResponse{
 			Code:    fiber.StatusUnprocessableEntity,
 			Data:    nil,
-			Message: utils.BodyParamMissing,
+			Message: err.Error(),
 		})
 	}
 
@@ -131,9 +134,10 @@ func (th *transactionHandler) Create(c *fiber.Ctx) error {
 // @Summary Transaction
 // @Description Create Transaction data for non crucial data
 // @Tags Transactions
+// @Security Token
 // @Accept  json
 // @Produce  json
-// @Param transaction body domain.InstallmentUpdae true "transaction to pay installment"
+// @Param transaction body domain.BulkInstallmentUpdate true "transaction to pay installment"
 // @Success 200 {object} domain.SingleResponse{data=domain.TransactionResponse}
 // @Failure 422 {object} domain.SingleResponse
 // @Failure 500 {object} domain.SingleResponse
@@ -162,7 +166,7 @@ func (th *transactionHandler) PayOff(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(domain.SingleResponse{
 			Code:    fiber.StatusUnprocessableEntity,
 			Data:    nil,
-			Message: utils.BodyParamMissing,
+			Message: err.Error(),
 		})
 	}
 
@@ -178,6 +182,7 @@ func (th *transactionHandler) PayOff(c *fiber.Ctx) error {
 // @Summary Get Transaction
 // @Description Get Transaction data
 // @Tags Transactions
+// @Security Token
 // @Accept  json
 // @Produce  json
 // @Param id path int true "Transaction ID"
