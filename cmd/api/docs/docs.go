@@ -80,6 +80,11 @@ const docTemplate = `{
         },
         "/api/customer/get": {
             "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
                 "description": "Get Customer data",
                 "consumes": [
                     "application/json"
@@ -127,6 +132,11 @@ const docTemplate = `{
         },
         "/api/customer/update": {
             "put": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
                 "description": "Update Customer data for non crucial data",
                 "consumes": [
                     "application/json"
@@ -185,6 +195,11 @@ const docTemplate = `{
         },
         "/api/customer/update/salary": {
             "put": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
                 "description": "Update Customer data for non crucial data",
                 "consumes": [
                     "application/json"
@@ -299,8 +314,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/transaction/create": {
+            "post": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "description": "Create Transaction data for non crucial data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Transaction",
+                "parameters": [
+                    {
+                        "description": "transaction to create",
+                        "name": "transaction",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.TransactionInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/domain.SingleResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.TransactionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/transaction/get": {
             "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
                 "description": "Get Transaction data",
                 "consumes": [
                     "application/json"
@@ -348,6 +431,11 @@ const docTemplate = `{
         },
         "/api/transaction/get/{id}": {
             "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
                 "description": "Get Transaction data",
                 "consumes": [
                     "application/json"
@@ -404,6 +492,11 @@ const docTemplate = `{
         },
         "/api/transaction/installment/pay": {
             "post": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
                 "description": "Create Transaction data for non crucial data",
                 "consumes": [
                     "application/json"
@@ -422,65 +515,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.InstallmentUpdae"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/domain.SingleResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/domain.TransactionResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/domain.SingleResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/domain.SingleResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/transaction/update": {
-            "post": {
-                "description": "Create Transaction data for non crucial data",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Transactions"
-                ],
-                "summary": "Transaction",
-                "parameters": [
-                    {
-                        "description": "transaction to create",
-                        "name": "transaction",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.TransactionInput"
+                            "$ref": "#/definitions/domain.BulkInstallmentUpdate"
                         }
                     }
                 ],
@@ -532,6 +567,20 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string"
+                }
+            }
+        },
+        "domain.BulkInstallmentUpdate": {
+            "type": "object",
+            "properties": {
+                "installment_update": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.InstallmentUpdae"
+                    }
+                },
+                "transaction_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -756,10 +805,10 @@ const docTemplate = `{
                 "installment": {
                     "type": "integer"
                 },
-                "limit_id": {
+                "otr": {
                     "type": "integer"
                 },
-                "otr": {
+                "tenor": {
                     "type": "integer"
                 }
             }
