@@ -120,17 +120,6 @@ func createDatabase(db *sql.DB, dbName string) {
 	fmt.Printf("Database '%s' created successfully\n", dbName)
 }
 
-func createDatabaseRep(db *sql.DB, dbName string) {
-	createDBQuery := fmt.Sprintf("CREATE DATABASE %s", dbName)
-
-	_, err := db.Exec(createDBQuery)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("Database '%s' created successfully\n", dbName)
-}
-
 func DatabaseExists() (bool, error) {
 	dbName := os.Getenv("DB_NAME")
 	rows, err := db.Query(`SELECT 1 FROM pg_database WHERE datname = $1`, dbName)

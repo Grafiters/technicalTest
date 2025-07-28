@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/Grafiters/archive/configs"
 	"github.com/Grafiters/archive/internal/domain"
 	"gorm.io/gorm"
@@ -22,8 +24,8 @@ func NewAuthRepository(
 func (m *mysqlAuthRepository) Login(auth *domain.AuthRequest) (*domain.Customer, error) {
 	var customer *domain.Customer
 	err := m.db.Where("email = ?", auth.Email).First(&customer)
-	if err != nil {
-		m.logger.Error("failed to get customer data for login, err: %+v", err)
+	if err == nil {
+		m.logger.Error("failed to get customer data for login, err: ", err)
 		return &domain.Customer{}, err.Error
 	}
 
@@ -56,8 +58,8 @@ func (m *mysqlAuthRepository) GetByEmail(email string) (*domain.Customer, error)
 	var customer *domain.Customer
 	err := m.db.Where("email = ?", email).First(&customer)
 	if err != nil {
-		m.logger.Error("failed to get customer data for login, err: %+v", err)
-		return &domain.Customer{}, err.Error
+		m.logger.Error("failed to get customer data by email, err: ", err)
+		return &domain.Customer{}, fmt.Errorf("email already in use")
 	}
 
 	return customer, nil

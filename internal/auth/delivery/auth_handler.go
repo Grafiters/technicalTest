@@ -64,7 +64,7 @@ func (ah *authHandler) Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(domain.SingleResponse{
 			Code:    fiber.StatusUnprocessableEntity,
 			Data:    nil,
-			Message: utils.BodyParamMissing,
+			Message: err.Error(),
 		})
 	}
 
@@ -120,7 +120,7 @@ func (ah *authHandler) Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(domain.SingleResponse{
 			Code:    fiber.StatusUnprocessableEntity,
 			Data:    nil,
-			Message: utils.InvalidMessageBody,
+			Message: err.Error(),
 		})
 	}
 
