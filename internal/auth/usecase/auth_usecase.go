@@ -48,7 +48,7 @@ func (a *authUsecase) Login(ctx *fiber.Ctx, auth *domain.AuthRequest) (*domain.C
 // Register implements domain.AuthUsecase.
 func (a *authUsecase) Register(ctx *fiber.Ctx, data *domain.RegisterRequest) (*domain.Customer, error) {
 	_, err := a.authRepo.GetByEmail(data.Email)
-	if err == nil {
+	if err != nil {
 		a.logger.Error("failed to validate customer email, err: %+v", err)
 		return nil, fmt.Errorf("email already in use")
 	}
