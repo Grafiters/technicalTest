@@ -54,6 +54,7 @@ func (js *JwtService) GenerateTokenSession(idf string) (string, error) {
 }
 
 func (js *JwtService) DecodeTokenSession(tokenString string, target interface{}) error {
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
