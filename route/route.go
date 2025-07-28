@@ -26,7 +26,6 @@ func SetupRouter() *fiber.App {
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept",
 		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
 	}))
 
@@ -41,6 +40,9 @@ func SetupRouter() *fiber.App {
 		`),
 	}))
 
+	app.Options("/*", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
 	api := app.Group("/api")
 
 	limitRepo := limitMysql.NewLimitRepository(configs.DataBase, configs.Logger)
