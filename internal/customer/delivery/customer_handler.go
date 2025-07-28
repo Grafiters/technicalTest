@@ -32,6 +32,7 @@ func NewCustomerHandler(
 // @Router /api/customer/get [get]
 // @Summary Get Customer
 // @Description Get Customer data
+// @Security Token
 // @Tags Customers
 // @Accept  json
 // @Produce  json
@@ -50,7 +51,7 @@ func (ch *customerHandler) Get(c *fiber.Ctx) error {
 		})
 	}
 	return c.Status(fiber.StatusOK).JSON(domain.SingleResponse{
-		Code:    fiber.StatusUnprocessableEntity,
+		Code:    fiber.StatusOK,
 		Data:    customer,
 		Message: "successfully created user",
 	})
@@ -61,6 +62,7 @@ func (ch *customerHandler) Get(c *fiber.Ctx) error {
 // @Summary Update Customer
 // @Description Update Customer data for non crucial data
 // @Tags Customers
+// @Security Token
 // @Accept  json
 // @Produce  json
 // @Param customer body domain.CustomerUpdate true "customer to create"
@@ -108,6 +110,7 @@ func (ch *customerHandler) Update(c *fiber.Ctx) error {
 // @Summary Update Customer
 // @Description Update Customer data for non crucial data
 // @Tags Customers
+// @Security Token
 // @Accept  json
 // @Produce  json
 // @Param customer body domain.CustomerUpdateSalary true "customer to create"

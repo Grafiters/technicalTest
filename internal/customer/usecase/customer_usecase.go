@@ -46,6 +46,20 @@ func (c *customerUsecase) Get(ctx *fiber.Ctx, ID int64) (*domain.CustomerRespons
 	}
 
 	customerResponse := customer.ToCustomerResponse()
+
+	limit, err := c.limitRepo.GetByCustommerID(customer.ID)
+	if err != nil {
+		c.logger.Error("failed to limit customer, err: %+v", err)
+		return &domain.CustomerResponse{}, err
+	}
+
+	limitResponse := []*domain.LimitResponse{}
+	for _, val := range limit {
+		limitResponse = append(limitResponse, val.ToLimitResponse())
+	}
+
+	customerResponse.Limit = limitResponse
+
 	return customerResponse, nil
 }
 

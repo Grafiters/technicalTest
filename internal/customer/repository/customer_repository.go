@@ -121,7 +121,7 @@ func (u *mysqlCustomerRepository) UpdateSalary(ID int64, salary domain.CustomerU
 		return &domain.Customer{}, fmt.Errorf(utils.DataNotFound)
 	}
 
-	if err := u.db.Model(&customer).Update("salary = ?", salary.Salary).Error; err != nil {
+	if err := u.db.Model(&customer).Where("id = ?", ID).Update("salary", salary.Salary).Error; err != nil {
 		u.logger.Error("faild to update data customer, err: %+v", err)
 		return nil, err
 	}
