@@ -12,17 +12,20 @@ import (
 type customerUsecase struct {
 	customerRepo domain.CustomerRepository
 	limitRepo    domain.LimitRepository
+	minio        *configs.MinioConfig
 	logger       *configs.LoggerFormat
 }
 
 func NewCustomerUsecase(
 	customerRepo domain.CustomerRepository,
 	limitRepo domain.LimitRepository,
+	minio *configs.MinioConfig,
 	logger *configs.LoggerFormat,
 ) domain.CustomerUsecase {
 	return &customerUsecase{
 		customerRepo: customerRepo,
 		limitRepo:    limitRepo,
+		minio:        minio,
 		logger:       logger,
 	}
 }

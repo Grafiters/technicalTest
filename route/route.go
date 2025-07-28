@@ -15,7 +15,6 @@ import (
 	transactionMysql "github.com/Grafiters/archive/internal/transaction/repository"
 	transactionUsecase "github.com/Grafiters/archive/internal/transaction/usecase"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/swagger"
 )
@@ -24,9 +23,24 @@ func SetupRouter() *fiber.App {
 	app := fiber.New()
 	app.Use(logger.New())
 
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-	}))
+	allowedOrigins := configs.Origin
+
+	app.Use(func(c *fiber.Ctx) error {
+		origin := c.Get("Origin")
+
+		if allowedOrigins[origin] {
+			c.Set("Access-Control-Allow-Origin", origin)
+			c.Set("Access-Control-Allow-Credentials", "true")
+			c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		}
+
+		if c.Method() == fiber.MethodOptions {
+			return c.SendStatus(fiber.StatusNoContent)
+		}
+
+		return c.Next()
+	})
 
 	app.Get("/api/openapi/*", swagger.New(swagger.Config{
 		Title:  "Skill Test Pertama - Bayu Grafit Nur Alfian",
@@ -51,7 +65,7 @@ func SetupRouter() *fiber.App {
 	authHttp.NewAuthHandler(api, configs.JwtConfig, authUsecase, configs.Logger)
 
 	customerRepo := customerMysql.NewCustomerRepository(configs.DataBase, configs.Logger)
-	customerUsecase := customerUsecase.NewCustomerUsecase(customerRepo, limitRepo, configs.Logger)
+	customerUsecase := customerUsecase.NewCustomerUsecase(customerRepo, limitRepo, configs.Minio, configs.Logger)
 	customerHttp.NewCustomerHandler(api, customerUsecase, configs.Logger)
 
 	transactionRepo := transactionMysql.NewTranscationRepository(configs.DataBase, configs.Logger)
