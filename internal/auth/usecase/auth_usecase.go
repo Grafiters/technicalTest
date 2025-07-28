@@ -32,7 +32,7 @@ func NewAuthUsecase(
 func (a *authUsecase) Login(ctx *fiber.Ctx, auth *domain.AuthRequest) (*domain.Customer, error) {
 	customer, err := a.authRepo.Login(auth)
 	if err != nil {
-		a.logger.Error("failed to get customer with email, err: %+v", err)
+		a.logger.Error("failed to get customer with email, err: ", err)
 		return nil, fmt.Errorf(utils.DataNotFound)
 	}
 
@@ -48,14 +48,13 @@ func (a *authUsecase) Login(ctx *fiber.Ctx, auth *domain.AuthRequest) (*domain.C
 // Register implements domain.AuthUsecase.
 func (a *authUsecase) Register(ctx *fiber.Ctx, data *domain.RegisterRequest) (*domain.Customer, error) {
 	_, err := a.authRepo.GetByEmail(data.Email)
-	if err != nil {
-		a.logger.Error("failed to validate customer email, err: %+v", err)
+	if err == nil {
 		return nil, fmt.Errorf("email already in use")
 	}
 
 	password, err := utils.Hash(data.Password)
 	if err != nil {
-		a.logger.Error("failed to hash password, err: %+v", err)
+		a.logger.Error("failed to hash password, err: ", err)
 		return nil, fmt.Errorf(utils.ProsessError)
 	}
 
@@ -63,13 +62,13 @@ func (a *authUsecase) Register(ctx *fiber.Ctx, data *domain.RegisterRequest) (*d
 
 	customer, err := a.authRepo.Register(data)
 	if err != nil {
-		a.logger.Error("failed to register customer, err: %+v", err)
+		a.logger.Error("failed to register customer, err: ", err)
 		return nil, fmt.Errorf(utils.ProsessError)
 	}
 
 	err = a.handleCerateLimit(customer)
 	if err != nil {
-		a.logger.Error("failed to handle create limit, err: %+v", err)
+		a.logger.Error("failed to handle create limit, err: ", err)
 		return nil, fmt.Errorf(utils.ProsessError)
 	}
 
@@ -85,7 +84,7 @@ func (a *authUsecase) handleCerateLimit(data *domain.Customer) error {
 
 	_, err := a.limitRepo.BulkCreateLimit(limitInput)
 	if err != nil {
-		a.logger.Error("failed to bulk create limit, err: %+v", err)
+		a.logger.Error("failed to bulk create limit, err: ", err)
 		return err
 	}
 
