@@ -10,6 +10,7 @@ import (
 	customerHttp "github.com/Grafiters/archive/internal/customer/delivery"
 	customerMysql "github.com/Grafiters/archive/internal/customer/repository"
 	customerUsecase "github.com/Grafiters/archive/internal/customer/usecase"
+	limitMysql "github.com/Grafiters/archive/internal/limit/repository"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -37,12 +38,14 @@ func SetupRouter() *fiber.App {
 		`),
 	}))
 
+	limitRepo := limitMysql.NewLimitRepository(configs.DataBase, configs.Logger)
+
 	authRepo := authMysql.NewAuthRepository(configs.DataBase, configs.Logger)
-	authUsecase := authUsecase.NewAuthUsecase(authRepo, configs.Logger)
+	authUsecase := authUsecase.NewAuthUsecase(authRepo, limitRepo, configs.Logger)
 	authHttp.NewAuthHandler(app, configs.JwtConfig, authUsecase, configs.Logger)
 
 	customerRepo := customerMysql.NewCustomerRepository(configs.DataBase, configs.Logger)
-	customerUsecase := customerUsecase.NewCustomerUsecase(customerRepo, configs.Logger)
+	customerUsecase := customerUsecase.NewCustomerUsecase(customerRepo, limitRepo, configs.Logger)
 	customerHttp.NewCustomerHandler(app, customerUsecase, configs.Logger)
 
 	return app

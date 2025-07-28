@@ -11,15 +11,21 @@ import (
 )
 
 type authUsecase struct {
-	authRepo domain.AuthRepository
-	logger   *configs.LoggerFormat
+	authRepo  domain.AuthRepository
+	limitRepo domain.LimitRepository
+	logger    *configs.LoggerFormat
 }
 
 func NewAuthUsecase(
 	authRepo domain.AuthRepository,
+	limitRepo domain.LimitRepository,
 	logger *configs.LoggerFormat,
 ) domain.AuthUsecase {
-	return &authUsecase{authRepo, logger}
+	return &authUsecase{
+		authRepo:  authRepo,
+		limitRepo: limitRepo,
+		logger:    logger,
+	}
 }
 
 // Login implements domain.AuthUsecase.
@@ -61,5 +67,28 @@ func (a *authUsecase) Register(ctx *fiber.Ctx, data *domain.RegisterRequest) (*d
 		return nil, fmt.Errorf(utils.ProsessError)
 	}
 
+	err = a.handleCerateLimit(customer)
+	if err != nil {
+		a.logger.Error("failed to handle create limit, err: %+v", err)
+		return nil, fmt.Errorf(utils.ProsessError)
+	}
+
 	return customer, nil
+}
+
+func (a *authUsecase) handleCerateLimit(data *domain.Customer) error {
+	tenorLimit := domain.BuildTenorFactor(data.Salary)
+	limitInput := &domain.BulkLimitInput{
+		CustomerID: data.ID,
+		LimitTenor: tenorLimit,
+	}
+
+	_, err := a.limitRepo.BulkCreateLimit(limitInput)
+	if err != nil {
+		a.logger.Error("failed to bulk create limit, err: %+v", err)
+		return err
+	}
+
+	return nil
+
 }

@@ -11,14 +11,20 @@ import (
 
 type customerUsecase struct {
 	customerRepo domain.CustomerRepository
+	limitRepo    domain.LimitRepository
 	logger       *configs.LoggerFormat
 }
 
 func NewCustomerUsecase(
 	customerRepo domain.CustomerRepository,
+	limitRepo domain.LimitRepository,
 	logger *configs.LoggerFormat,
 ) domain.CustomerUsecase {
-	return &customerUsecase{customerRepo, logger}
+	return &customerUsecase{
+		customerRepo: customerRepo,
+		limitRepo:    limitRepo,
+		logger:       logger,
+	}
 }
 
 func (c *customerUsecase) Create(ctx *fiber.Ctx, data *domain.CustomerInput) (*domain.CustomerResponse, error) {
@@ -61,6 +67,25 @@ func (c *customerUsecase) UpdateSalary(ctx *fiber.Ctx, ID int64, salary *domain.
 		return &domain.CustomerResponse{}, fmt.Errorf(utils.ProsessError)
 	}
 
+	err = c.handleCerateLimit(customer)
+
 	customerResponse := customer.ToCustomerResponse()
 	return customerResponse, nil
+}
+
+func (c *customerUsecase) handleCerateLimit(data *domain.Customer) error {
+	tenorLimit := domain.BuildTenorFactor(data.Salary)
+	limitInput := &domain.BulkLimitInput{
+		CustomerID: data.ID,
+		LimitTenor: tenorLimit,
+	}
+
+	_, err := c.limitRepo.BulkCreateLimit(limitInput)
+	if err != nil {
+		c.logger.Error("failed to bulk create limit, err: %+v", err)
+		return err
+	}
+
+	return nil
+
 }

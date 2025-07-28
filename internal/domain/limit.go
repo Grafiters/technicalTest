@@ -16,9 +16,13 @@ type Limit struct {
 }
 
 type LimitInput struct {
-	CustomerID int64 `json:"customer_id"`
-	Tenor      int   `json:"tenor"`
-	Amount     int64 `json:"amount"`
+	Tenor  int   `json:"tenor"`
+	Amount int64 `json:"amount"`
+}
+
+type BulkLimitInput struct {
+	CustomerID int64         `json:"customer_id"`
+	LimitTenor []*LimitInput `json:"limit_tenor"`
 }
 
 type LimitResponse struct {
@@ -29,16 +33,26 @@ type LimitResponse struct {
 	UpdatedAT time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
+type LimitFilter struct {
+	CustomerID int64 `json:"customer_id"`
+	Tenor      int64 `json:"tenor"`
+	Amount     int64 `json:"amount"`
+}
+
 type LimitUsecase interface {
-	Create(ctx fiber.Ctx, data *LimitInput) error
-	GetByID(ctx fiber.Ctx, ID int64) (*Limit, error)
-	GetByCustommerID(ctx fiber.Ctx, CustomerID int64) ([]*Limit, error)
+	BulkCreateLimit(ctx *fiber.Ctx, data *BulkLimitInput) error
+	GetByCustommerID(ctx *fiber.Ctx, CustomerID int64) ([]*Limit, error)
 	Update(
-		ctx fiber.Ctx,
-		CustomerID int64,
-		oldData *Limit,
-		newData *Limit,
-	) (*Limit, error)
+		ctx *fiber.Ctx,
+		newData *BulkLimitInput,
+	) ([]*Limit, error)
+}
+
+type LimitRepository interface {
+	Get(filter *LimitFilter) ([]*Limit, error)
+	GetByCustommerID(CustomerID int64) ([]*Limit, error)
+	BulkCreateLimit(data *BulkLimitInput) ([]*int64, error)
+	BulkUpdateLimit(data *BulkLimitInput) ([]*int64, error)
 }
 
 func (l *Limit) ToLimitResponse() *LimitResponse {
@@ -49,4 +63,23 @@ func (l *Limit) ToLimitResponse() *LimitResponse {
 		CreatedAT: l.CreatedAT,
 		UpdatedAT: l.UpdatedAT,
 	}
+}
+
+func BuildTenorFactor(salary int64) []*LimitInput {
+	tenorFactor := map[int]float64{
+		1: 0.4,
+		2: 0.6,
+		3: 0.75,
+		6: 1.0,
+	}
+
+	limits := []*LimitInput{}
+	for tenor, factor := range tenorFactor {
+		limit := &LimitInput{
+			Tenor:  tenor,
+			Amount: int64(float64(salary) * factor),
+		}
+		limits = append(limits, limit)
+	}
+	return limits
 }
