@@ -6,6 +6,7 @@ import (
 
 	"github.com/Grafiters/archive/configs"
 	"github.com/Grafiters/archive/internal/domain"
+	"github.com/Grafiters/archive/utils"
 	"gorm.io/gorm"
 )
 
@@ -111,6 +112,17 @@ func (m *mysqlLimitRepository) GetByCustommerID(CustomerID int64) ([]*domain.Lim
 	return limit, nil
 }
 
+func (m *mysqlLimitRepository) GetByID(ID int64) (*domain.Limit, error) {
+	var limit *domain.Limit
+	err := m.db.Where("id = ?", ID).First(&limit)
+	if err != nil {
+		m.logger.Error("failed to get limit customer, err: %+v", err)
+		return &domain.Limit{}, fmt.Errorf(utils.DataNotFound)
+	}
+
+	return limit, nil
+}
+
 func (m *mysqlLimitRepository) bulkDeleteLimit(data *domain.BulkLimitInput) error {
 	err := m.db.Where("customer_id = ?", data.CustomerID).Delete(&domain.Limit{})
 	return err.Error
@@ -127,6 +139,12 @@ func getWhereClause(filter *domain.LimitFilter) (string, []interface{}) {
 		query := fmt.Sprintf("tenor = ?")
 		whereClauses = append(whereClauses, query)
 		args = append(args, filter.Tenor)
+	}
+
+	if filter.ID != 0 {
+		query := fmt.Sprintf("id = ?")
+		whereClauses = append(whereClauses, query)
+		args = append(args, filter.ID)
 	}
 
 	if filter.CustomerID != 0 {

@@ -34,6 +34,7 @@ type LimitResponse struct {
 }
 
 type LimitFilter struct {
+	ID         int64 `json:"id"`
 	CustomerID int64 `json:"customer_id"`
 	Tenor      int64 `json:"tenor"`
 	Amount     int64 `json:"amount"`
@@ -51,6 +52,7 @@ type LimitUsecase interface {
 type LimitRepository interface {
 	Get(filter *LimitFilter) ([]*Limit, error)
 	GetByCustommerID(CustomerID int64) ([]*Limit, error)
+	GetByID(ID int64) (*Limit, error)
 	BulkCreateLimit(data *BulkLimitInput) ([]*int64, error)
 	BulkUpdateLimit(data *BulkLimitInput) ([]*int64, error)
 }
