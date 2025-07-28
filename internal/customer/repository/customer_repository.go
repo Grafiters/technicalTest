@@ -79,6 +79,7 @@ func (u *mysqlCustomerRepository) GetByID(ID int64) (*domain.Customer, error) {
 	var customer *domain.Customer
 	result := u.db.Where("id = ?", ID).First(&customer)
 	if result.Error != nil {
+		u.logger.Error("failed to get customer, err: ", result.Error)
 		return &domain.Customer{}, result.Error
 	}
 	return customer, nil

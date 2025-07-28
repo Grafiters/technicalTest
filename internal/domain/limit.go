@@ -53,6 +53,7 @@ type LimitRepository interface {
 	Get(filter *LimitFilter) ([]*Limit, error)
 	GetByCustommerID(CustomerID int64) ([]*Limit, error)
 	GetByID(ID int64) (*Limit, error)
+	GetByTenor(CustomerID int64, tenor int64) (*Limit, error)
 	BulkCreateLimit(data *BulkLimitInput) ([]*int64, error)
 	BulkUpdateLimit(data *BulkLimitInput) ([]*int64, error)
 }

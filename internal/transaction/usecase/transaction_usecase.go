@@ -24,20 +24,33 @@ func NewTransactionUsecase(
 ) domain.TransactionUsecase {
 	return &transactionUsecase{
 		transactionRepo: transactionRepo,
+		customerRepo:    customerRepo,
 		limitRepo:       limitRepo,
 		logger:          logger,
 	}
 }
 
 func (t *transactionUsecase) Create(ctx *fiber.Ctx, UserID int64, data *domain.TransactionInput) (*domain.TransactionResponse, error) {
-	err := t.validateLimit(data)
+	limit, err := t.validateLimit(UserID, data)
 	if err != nil {
+		t.logger.Error("failed to failed limit, err: ", err)
 		return nil, err
 	}
 
-	transaction, err := t.transactionRepo.Create(UserID, data)
+	transactionData := &domain.Transaction{
+		CustomerID:  UserID,
+		LimitID:     limit.ID,
+		ContractNo:  data.ContractNo,
+		OTR:         data.OTR,
+		AdminFee:    data.AdminFee,
+		Installment: data.Installment,
+		AssetName:   data.AssetName,
+		Status:      "active",
+	}
+
+	transaction, err := t.transactionRepo.Create(UserID, transactionData)
 	if err != nil {
-		t.logger.Error("failed to create transaction, err: %+v", err)
+		t.logger.Error("failed to create transaction, err: ", err)
 		return nil, err
 	}
 
@@ -45,19 +58,28 @@ func (t *transactionUsecase) Create(ctx *fiber.Ctx, UserID int64, data *domain.T
 
 	customer, err := t.customerRepo.GetByID(transaction.CustomerID)
 	if err != nil {
-		t.logger.Error("failed to get customer data, err: %+v", err)
+		t.logger.Error("failed to get customer data, err: ", err)
 		return nil, err
 	}
+
+	t.mappinInstallmentData(UserID, transaction)
 
 	transactionToResponse.Customer = customer.ToCustomerResponse()
 
-	limit, err := t.limitRepo.GetByID(transaction.LimitID)
+	transactionToResponse.Limit = limit.ToLimitResponse()
+
+	installment, err := t.transactionRepo.GetInstallmentLogs(transactionToResponse.ID)
 	if err != nil {
-		t.logger.Error("failed to get limit customer data, err: %+v", err)
+		t.logger.Error("failed to get installment log data, err: ", err)
 		return nil, err
 	}
 
-	transactionToResponse.Limit = limit.ToLimitResponse()
+	installmentResponse := []*domain.InstallmentLogRespponse{}
+	for _, i := range installment {
+		installmentResponse = append(installmentResponse, i.ToRespose())
+	}
+
+	transactionToResponse.InstallmentList = installmentResponse
 
 	return transactionToResponse, nil
 }
@@ -65,19 +87,19 @@ func (t *transactionUsecase) Create(ctx *fiber.Ctx, UserID int64, data *domain.T
 func (t *transactionUsecase) Get(ctx *fiber.Ctx, customerID int64, filter *domain.TransactionFilter) ([]*domain.TransactionResponse, int, error) {
 	transaction, totalSize, err := t.transactionRepo.Get(customerID, filter)
 	if err != nil {
-		t.logger.Error("failed to get transaction customer data, err: %+v", err)
+		t.logger.Error("failed to get transaction customer data, err: ", err)
 		return nil, 0, err
 	}
 
-	limits := []*domain.Limit{}
-	customers := []*domain.Customer{}
+	limits := make(map[int64]*domain.Limit)
+	customers := make(map[int64]*domain.Customer)
 	transactionResponse := []*domain.TransactionResponse{}
 	for _, val := range transaction {
 		txResponse := val.ToResponse()
 
 		limit, err := t.limitRepo.GetByID(val.LimitID)
 		if err != nil {
-			t.logger.Error("failed to get limit customer data, err: %+v", err)
+			t.logger.Error("failed to get limit customer data, err: ", err)
 			return nil, 0, err
 		}
 
@@ -88,13 +110,26 @@ func (t *transactionUsecase) Get(ctx *fiber.Ctx, customerID int64, filter *domai
 
 		customer, err := t.customerRepo.GetByID(val.CustomerID)
 		if err != nil {
-			t.logger.Error("failed to get customer data, err: %+v", err)
+			t.logger.Error("failed to get customer data, err: ", err)
 			return nil, 0, err
 		}
 
 		customerResponse := customer.ToCustomerResponse()
 		txResponse.Customer = customerResponse
 		customers[val.CustomerID] = customer
+
+		installment, err := t.transactionRepo.GetInstallmentLogs(val.ID)
+		if err != nil {
+			t.logger.Error("failed to get installment log data, err: ", err)
+			return nil, 0, err
+		}
+
+		installmentResponse := []*domain.InstallmentLogRespponse{}
+		for _, i := range installment {
+			installmentResponse = append(installmentResponse, i.ToRespose())
+		}
+
+		txResponse.InstallmentList = installmentResponse
 
 		transactionResponse = append(transactionResponse, txResponse)
 	}
@@ -105,7 +140,7 @@ func (t *transactionUsecase) Get(ctx *fiber.Ctx, customerID int64, filter *domai
 func (t *transactionUsecase) GetByID(ctx *fiber.Ctx, CustomerID int64) (*domain.TransactionResponse, error) {
 	transaction, err := t.transactionRepo.GetByID(CustomerID)
 	if err != nil {
-		t.logger.Error("failed to get transaction customer data, err: %+v", err)
+		t.logger.Error("failed to get transaction customer data, err: ", err)
 		return nil, err
 	}
 
@@ -113,7 +148,7 @@ func (t *transactionUsecase) GetByID(ctx *fiber.Ctx, CustomerID int64) (*domain.
 
 	limit, err := t.limitRepo.GetByID(transaction.LimitID)
 	if err != nil {
-		t.logger.Error("failed to get limit customer data, err: %+v", err)
+		t.logger.Error("failed to get limit customer data, err: ", err)
 		return nil, err
 	}
 
@@ -122,12 +157,25 @@ func (t *transactionUsecase) GetByID(ctx *fiber.Ctx, CustomerID int64) (*domain.
 
 	customer, err := t.customerRepo.GetByID(transaction.CustomerID)
 	if err != nil {
-		t.logger.Error("failed to get customer data, err: %+v", err)
+		t.logger.Error("failed to get customer data, err: ", err)
 		return nil, err
 	}
 
 	customerResponse := customer.ToCustomerResponse()
 	transactionResponse.Customer = customerResponse
+
+	installment, err := t.transactionRepo.GetInstallmentLogs(transaction.ID)
+	if err != nil {
+		t.logger.Error("failed to get installment log data, err: ", err)
+		return nil, err
+	}
+
+	installmentResponse := []*domain.InstallmentLogRespponse{}
+	for _, i := range installment {
+		installmentResponse = append(installmentResponse, i.ToRespose())
+	}
+
+	transactionResponse.InstallmentList = installmentResponse
 
 	return transactionResponse, nil
 }
@@ -135,7 +183,7 @@ func (t *transactionUsecase) GetByID(ctx *fiber.Ctx, CustomerID int64) (*domain.
 func (t *transactionUsecase) GetByCustomerID(ctx *fiber.Ctx, CustomerID int64) (*domain.TransactionResponse, error) {
 	transaction, err := t.transactionRepo.GetByCustomerID(CustomerID)
 	if err != nil {
-		t.logger.Error("failed to get transaction customer data, err: %+v", err)
+		t.logger.Error("failed to get transaction customer data, err: ", err)
 		return nil, err
 	}
 
@@ -143,7 +191,7 @@ func (t *transactionUsecase) GetByCustomerID(ctx *fiber.Ctx, CustomerID int64) (
 
 	limit, err := t.limitRepo.GetByID(transaction.LimitID)
 	if err != nil {
-		t.logger.Error("failed to get limit customer data, err: %+v", err)
+		t.logger.Error("failed to get limit customer data, err: ", err)
 		return nil, err
 	}
 
@@ -152,7 +200,7 @@ func (t *transactionUsecase) GetByCustomerID(ctx *fiber.Ctx, CustomerID int64) (
 
 	customer, err := t.customerRepo.GetByID(transaction.CustomerID)
 	if err != nil {
-		t.logger.Error("failed to get customer data, err: %+v", err)
+		t.logger.Error("failed to get customer data, err: ", err)
 		return nil, err
 	}
 
@@ -164,20 +212,24 @@ func (t *transactionUsecase) GetByCustomerID(ctx *fiber.Ctx, CustomerID int64) (
 
 func (t *transactionUsecase) BulkUpdateInstallment(c *fiber.Ctx, ID int64, data *domain.BulkInstallmentUpdate) (*domain.TransactionResponse, error) {
 	// Ambil transaksi
-	tx, err := t.transactionRepo.GetByID(ID)
+	tx, err := t.transactionRepo.GetByID(data.TransactionID)
 	if err != nil {
 		return nil, fmt.Errorf("transaction not found: %w", err)
 	}
 
-	// Ambil semua installment log yang belum dibayar
-	existingLogs, err := t.transactionRepo.GetInstallmentLogs(ID)
+	existingLogs, err := t.transactionRepo.GetInstallmentLogs(tx.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch existing installment logs: %w", err)
+	}
+	var month []int64
+	for _, item := range data.InstallmentUpdae {
+		month = append(month, int64(item.Month))
 	}
 
 	var unpaidTotal int64
 	for _, l := range existingLogs {
-		if l.PaidAt == nil {
+		isMonthInclude := IsMonthIncluded(int64(l.Month), month)
+		if l.PaidAt == nil && isMonthInclude {
 			unpaidTotal += l.Amount
 		}
 	}
@@ -212,54 +264,21 @@ func (t *transactionUsecase) BulkUpdateInstallment(c *fiber.Ctx, ID int64, data 
 	return response, nil
 }
 
-func (t *transactionUsecase) BulkinsertInstallment(ID int64, data *domain.BulkInstallmentInput) (*domain.TransactionResponse, error) {
-	// Ambil transaksi
-	tx, err := t.transactionRepo.GetByID(ID)
-	if err != nil {
-		return nil, fmt.Errorf("transaction not found: %w", err)
-	}
-
+func (t *transactionUsecase) BulkinsertInstallment(ID int64, data *domain.BulkInstallmentInput) (int64, error) {
 	// Ambil semua installment log yang belum dibayar
-	existingLogs, err := t.transactionRepo.GetInstallmentLogs(ID)
+	installment, err := t.transactionRepo.BulkInsertInstallment(ID, data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch existing installment logs: %w", err)
+		t.logger.Error("failed to bulk insert installment, err: ", err)
+		return 0, err
 	}
 
-	var unpaidTotal int64
-	for _, l := range existingLogs {
-		if l.PaidAt == nil {
-			unpaidTotal += l.Amount
-		}
-	}
-
-	var inputTotal int64
-	for _, v := range data.InstallmentInput {
-		inputTotal += v.Amount
-	}
-
-	if inputTotal != unpaidTotal {
-		return nil, fmt.Errorf("installment total mismatch: expected %d, got %d", unpaidTotal, inputTotal)
-	}
-	logs, err := t.transactionRepo.BulkInsertInstallment(ID, data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert installment logs: %w", err)
-	}
-
-	response := tx.ToResponse()
-	installmentResponse := []*domain.InstallmentLogRespponse{}
-	for _, val := range logs {
-		installmentResponse = append(installmentResponse, val.ToRespose())
-	}
-
-	response.InstallmentList = installmentResponse
-
-	return response, nil
+	return int64(len(installment)), nil
 }
 
 func (t *transactionUsecase) mappinInstallmentData(ID int64, data *domain.Transaction) error {
 	limit, err := t.limitRepo.GetByID(data.LimitID)
 	if err != nil {
-		t.logger.Error("failed to get limit customer data, err: %+v", err)
+		t.logger.Error("failed to get limit customer data, err: ", err)
 		return err
 	}
 
@@ -280,9 +299,9 @@ func (t *transactionUsecase) mappinInstallmentData(ID int64, data *domain.Transa
 		InstallmentInput: installmentInput,
 	}
 
-	_, err = t.BulkinsertInstallment(ID, builkInstallmentInput)
+	_, err = t.BulkinsertInstallment(data.ID, builkInstallmentInput)
 	if err != nil {
-		t.logger.Error("failed to generate installment logs, err: %+v", err)
+		t.logger.Error("failed to generate installment logs, err: ", err)
 		return err
 	}
 
@@ -314,21 +333,30 @@ func (t *transactionUsecase) handleUpdateTransaction(ID int64, status string) (*
 		return tx, nil
 	}
 
-	return nil, fmt.Errorf("failed to update transacton data")
+	return nil, nil
 }
 
-func (t *transactionUsecase) validateLimit(data *domain.TransactionInput) error {
-	limit, err := t.limitRepo.GetByID(data.LimitID)
+func (t *transactionUsecase) validateLimit(customerID int64, data *domain.TransactionInput) (*domain.Limit, error) {
+	limit, err := t.limitRepo.GetByTenor(customerID, data.Tenor)
 	if err != nil {
-		t.logger.Error("failed to get limit customer, err: %+v", err)
-		return err
+		t.logger.Error("failed to get limit customer, err: ", err)
+		return &domain.Limit{}, err
 	}
 
 	totalAmount := data.OTR + data.AdminFee + data.Installment
 	if limit.Amount < totalAmount {
 		t.logger.Error("Transaction is to higher then limit customer, err: ", limit.Amount)
-		return fmt.Errorf("your limit is to low then your transaction")
+		return &domain.Limit{}, fmt.Errorf("your limit is to low then your transaction")
 	}
 
-	return nil
+	return limit, nil
+}
+
+func IsMonthIncluded(amount int64, list []int64) bool {
+	for _, v := range list {
+		if v == amount {
+			return true
+		}
+	}
+	return false
 }

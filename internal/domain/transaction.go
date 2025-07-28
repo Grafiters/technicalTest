@@ -43,10 +43,9 @@ type BulkInstallmentInput struct {
 }
 
 type InstallmentUpdae struct {
-	Month   int       `json:"month"`
-	Amount  int64     `json:"amount"`
-	DueDate time.Time `json:"due_date"`
-	PaidAt  time.Time `json:"paid_at"`
+	Month  int       `json:"month"`
+	Amount int64     `json:"amount"`
+	PaidAt time.Time `json:"paid_at"`
 }
 
 type BulkInstallmentUpdate struct {
@@ -55,7 +54,7 @@ type BulkInstallmentUpdate struct {
 }
 
 type TransactionInput struct {
-	LimitID     int64  `json:"limit_id"`
+	Tenor       int64  `json:"tenor"`
 	ContractNo  int64  `json:"contract_no"`
 	OTR         int64  `json:"otr"`
 	AdminFee    int64  `json:"admin_fee"`
@@ -89,6 +88,7 @@ type InstallmentLogRespponse struct {
 	ID        int64      `json:"id"`
 	Month     int        `json:"month"`
 	Amount    int64      `json:"amount"`
+	DueDate   time.Time  `json:"due_date"`
 	PaidAt    *time.Time `json:"paid_at"`
 	CreatedAT time.Time  `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAT time.Time  `json:"updated_at" gorm:"autoUpdateTime"`
@@ -102,6 +102,7 @@ func (t *Transaction) ToResponse() *TransactionResponse {
 		AdminFee:    t.AdminFee,
 		Installment: t.Installment,
 		AssetName:   t.AssetName,
+		Status:      t.Status,
 		CreatedAT:   t.CreatedAT,
 		UpdatedAT:   t.UpdatedAT,
 	}
@@ -112,6 +113,7 @@ func (il *InstallmentLog) ToRespose() *InstallmentLogRespponse {
 		ID:        il.ID,
 		Month:     il.Month,
 		Amount:    il.Amount,
+		DueDate:   il.DueDate,
 		PaidAt:    il.PaidAt,
 		CreatedAT: il.CreatedAT,
 		UpdatedAT: il.UpdatedAT,
@@ -123,12 +125,12 @@ type TransactionUsecase interface {
 	Get(ctx *fiber.Ctx, customerID int64, filter *TransactionFilter) ([]*TransactionResponse, int, error)
 	GetByCustomerID(ctx *fiber.Ctx, ID int64) (*TransactionResponse, error)
 	GetByID(ctx *fiber.Ctx, ID int64) (*TransactionResponse, error)
-	BulkinsertInstallment(ID int64, data *BulkInstallmentInput) (*TransactionResponse, error)
+	BulkinsertInstallment(ID int64, data *BulkInstallmentInput) (int64, error)
 	BulkUpdateInstallment(ctx *fiber.Ctx, ID int64, data *BulkInstallmentUpdate) (*TransactionResponse, error)
 }
 
 type TransactionRepository interface {
-	Create(UserID int64, data *TransactionInput) (*Transaction, error)
+	Create(UserID int64, data *Transaction) (*Transaction, error)
 	Get(UserId int64, filter *TransactionFilter) ([]*Transaction, int, error)
 	GetByID(ID int64) (*Transaction, error)
 	GetByCustomerID(ID int64) (*Transaction, error)

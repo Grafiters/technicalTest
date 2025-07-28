@@ -115,7 +115,18 @@ func (m *mysqlLimitRepository) GetByCustommerID(CustomerID int64) ([]*domain.Lim
 func (m *mysqlLimitRepository) GetByID(ID int64) (*domain.Limit, error) {
 	var limit *domain.Limit
 	err := m.db.Where("id = ?", ID).First(&limit)
-	if err != nil {
+	if err.Error != nil {
+		m.logger.Error("failed to get limit customer, err: %+v", err)
+		return &domain.Limit{}, fmt.Errorf(utils.DataNotFound)
+	}
+
+	return limit, nil
+}
+
+func (m *mysqlLimitRepository) GetByTenor(CustomerID int64, tenor int64) (*domain.Limit, error) {
+	var limit *domain.Limit
+	err := m.db.Where("customer_id = ? AND tenor = ?", CustomerID, tenor).First(&limit)
+	if err.Error != nil {
 		m.logger.Error("failed to get limit customer, err: %+v", err)
 		return &domain.Limit{}, fmt.Errorf(utils.DataNotFound)
 	}

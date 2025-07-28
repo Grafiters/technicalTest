@@ -10,6 +10,15 @@ definitions:
     - email
     - password
     type: object
+  domain.BulkInstallmentUpdate:
+    properties:
+      installment_update:
+        items:
+          $ref: '#/definitions/domain.InstallmentUpdae'
+        type: array
+      transaction_id:
+        type: integer
+    type: object
   domain.CustomerResponse:
     properties:
       birth_date:
@@ -158,9 +167,9 @@ definitions:
         type: integer
       installment:
         type: integer
-      limit_id:
-        type: integer
       otr:
+        type: integer
+      tenor:
         type: integer
     type: object
   domain.TransactionResponse:
@@ -263,6 +272,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
       summary: Get Customer
       tags:
       - Customers
@@ -298,6 +309,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
       summary: Update Customer
       tags:
       - Customers
@@ -333,6 +346,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
       summary: Update Customer
       tags:
       - Customers
@@ -371,6 +386,43 @@ paths:
       summary: Register
       tags:
       - Auth
+  /api/transaction/create:
+    post:
+      consumes:
+      - application/json
+      description: Create Transaction data for non crucial data
+      parameters:
+      - description: transaction to create
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/domain.TransactionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.TransactionResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
+      summary: Transaction
+      tags:
+      - Transactions
   /api/transaction/get:
     get:
       consumes:
@@ -396,6 +448,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
       summary: Get Transaction
       tags:
       - Transactions
@@ -430,6 +484,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
       summary: Get Transaction
       tags:
       - Transactions
@@ -444,7 +500,7 @@ paths:
         name: transaction
         required: true
         schema:
-          $ref: '#/definitions/domain.InstallmentUpdae'
+          $ref: '#/definitions/domain.BulkInstallmentUpdate'
       produces:
       - application/json
       responses:
@@ -465,41 +521,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
-      summary: Transaction
-      tags:
-      - Transactions
-  /api/transaction/update:
-    post:
-      consumes:
-      - application/json
-      description: Create Transaction data for non crucial data
-      parameters:
-      - description: transaction to create
-        in: body
-        name: transaction
-        required: true
-        schema:
-          $ref: '#/definitions/domain.TransactionInput'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/domain.SingleResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/domain.TransactionResponse'
-              type: object
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/domain.SingleResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
       summary: Transaction
       tags:
       - Transactions
