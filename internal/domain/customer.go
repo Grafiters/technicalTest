@@ -9,15 +9,15 @@ import (
 type Customer struct {
 	ID             int64     `json:"id" gorm:"column:id;type:bigserial;primaryKey;autoIncrement"`
 	Email          string    `json:"email" gorm:"unique" validate:"required"`
-	Password       string    `json:"password"`
-	NIK            int       `json:"nik"`
-	FullName       string    `json:"full_name"`
-	LegalName      string    `json:"legal_name"`
-	BirthPlace     string    `json:"birth_place"`
-	BirthDate      time.Time `json:"birth_date"`
-	Salary         int64     `json:"salary"`
-	KTPImageUrl    string    `json:"ktp_image_url"`
-	SelfieImageUrl string    `json:"selfie_image_url"`
+	Password       string    `json:"password,omitempty"`
+	NIK            int       `json:"nik,omitempty"`
+	FullName       string    `json:"full_name,omitempty"`
+	LegalName      string    `json:"legal_name,omitempty"`
+	BirthPlace     string    `json:"birth_place,omitempty"`
+	BirthDate      time.Time `json:"birth_date,omitempty"`
+	Salary         int64     `json:"salary,omitempty"`
+	KTPImageUrl    string    `json:"ktp_image_url,omitempty"`
+	SelfieImageUrl string    `json:"selfie_image_url,omitempty"`
 	CreatedAT      time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAT      time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
