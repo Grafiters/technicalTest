@@ -1,10 +1,10 @@
 # GRAFIT PRODUCE
 ## Service
 ### Transaction Notification
-Transcation notificationi is service for handling store data transaction with checking status transaction
+Technical test base on studi case
 
 ## Features
-- Transaction Notification
+- Credit Plus
 - Check Status
 
 ## Endpoint
@@ -19,18 +19,18 @@ $ swag init --generalInfo ./cmd/api/main.go --output ./cmd/api/docs
 ## How to run
 ### Specification
 - database: postgres
-- language: golang:1.20
+- language: golang:1.24.5
 - environtment: file [.env](../configs/file.env) copy and paste in auth project as `.env`
 - migrate: make sure you migration is already setup on global setup
 - other: golang-migrate, swaggo
-- 
+- storage: minio
 
 #### auto install dependecies golang, and golang-migrate just run ```./install-dep.sh``` or setup dependencies using docker just run ```docker-compose up -Vd dbpgsql adminpgsql```
 
 ### How to run
 1.  clone this project
 ```bash
-$ git clone https://github.com/Grafiters/transaction-notification
+$ git clone https://github.com/Grafiters/technicalTest.git
 ```
 
 2.  install all dephendencies go.mod
@@ -52,10 +52,11 @@ $ ./script/task-list.sh db:seed
     $ go run cmd/api/main.go
     ```
 
-5.  access
-    - access endpoint http transaction notification database on ```http://{host}:8000/transaction-notification```
-    - access endpoint http checking status database on ```http://{host}:8000/checking-status```
-    - access documentation you can access on ```http://{host}:8000/api/openapi```
+5.  running worker
+    - running http endoint you can use:
+    ```bash
+    $ go run cmd/workers/main.go
+    ```
 
 ## How To Deploy
 ### Deploy using docker
@@ -63,7 +64,7 @@ Deployment launchpad service can using dockerize with build image and run with d
 1.  make sure the project has been cloning to your local machine computer
 2.  build the project using docker, exec the comand line below:
 ```bash
-$ docker build -t transaction:0.0.1 .
+$ docker build -t credit-plu:0.0.1 .
 ```
 
 3.  migrate all migratin table, exec the command line below:
@@ -74,10 +75,6 @@ $ docker-compose run --rm api sh -C "script/task-list.sh db:create && script/tas
 ```bash
 $ docker-compose up -Vd
 ```
-5.  access
-    - access endpoint http transaction notification database on ```http://{host}:8000/transaction-notification```
-    - access endpoint http checking status database on ```http://{host}:8000/checking-status```
-    - access documentation you can access on ```http://{host}:8000/api/openapi```
 
 # Contact
 For question, please contact telegram [alone](https://t.me/Grafiters)
