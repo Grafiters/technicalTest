@@ -58,6 +58,12 @@ $ ./script/task-list.sh db:seed
     $ go run cmd/api/main.go
     ```
 
+5.  running worker
+    - running http endoint you can use:
+    ```bash
+    $ go run cmd/workers/main.go
+    ```
+
 ## How To Deploy
 ### Deploy using docker
 Deployment launchpad service can using dockerize with build image and run with docker-compose, follow step deployment in below:
