@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	path = "launchpads"
+	path = "customer"
 )
 
 type MinioConfig struct {
