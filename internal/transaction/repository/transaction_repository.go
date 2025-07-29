@@ -206,6 +206,17 @@ func (m *mysqlTransactionRepository) BulkUpdateInstallment(ID int64, data *domai
 	return installment, nil
 }
 
+// GetInstallmentsByDueDate implements domain.TransactionRepository.
+func (m *mysqlTransactionRepository) GetInstallmentsByDueDate(date string) ([]*domain.InstallmentLog, error) {
+	var installment []*domain.InstallmentLog
+	err := m.db.Where("DATE(due_date) = ? AND paid_at IS NULL", date).Find(&installment)
+	if err.Error != nil {
+		return nil, err.Error
+	}
+
+	return installment, nil
+}
+
 func getWhereClause(filter *domain.TransactionFilter) (string, []interface{}) {
 	var (
 		whereClause string

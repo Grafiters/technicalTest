@@ -3,9 +3,6 @@
 ### Transaction Notification
 Transcation notificationi is service for handling store data transaction with checking status transaction
 
-### Demo Application
-📽️ [Watch Demo Video](./demo.mp4)
-
 ## Features
 - Transaction Notification
 - Check Status
@@ -26,6 +23,7 @@ $ swag init --generalInfo ./cmd/api/main.go --output ./cmd/api/docs
 - environtment: file [.env](../configs/file.env) copy and paste in auth project as `.env`
 - migrate: make sure you migration is already setup on global setup
 - other: golang-migrate, swaggo
+- 
 
 #### auto install dependecies golang, and golang-migrate just run ```./install-dep.sh``` or setup dependencies using docker just run ```docker-compose up -Vd dbpgsql adminpgsql```
 

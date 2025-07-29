@@ -138,4 +138,5 @@ type TransactionRepository interface {
 	BulkInsertInstallment(ID int64, data *BulkInstallmentInput) ([]*InstallmentLog, error)
 	BulkUpdateInstallment(ID int64, data *BulkInstallmentUpdate) ([]*InstallmentLog, error)
 	GetInstallmentLogs(transactionID int64) ([]*InstallmentLog, error)
+	GetInstallmentsByDueDate(date string) ([]*InstallmentLog, error)
 }
