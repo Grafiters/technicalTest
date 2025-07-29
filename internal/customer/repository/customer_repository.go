@@ -20,15 +20,13 @@ func NewCustomerRepository(db *gorm.DB, logger *configs.LoggerFormat) domain.Cus
 
 func (u *mysqlCustomerRepository) Create(data *domain.CustomerInput) (*domain.Customer, error) {
 	newCustomer := &domain.Customer{
-		Email:          data.Email,
-		NIK:            data.NIK,
-		FullName:       data.FullName,
-		LegalName:      data.LegalName,
-		BirthPlace:     data.BirthPlace,
-		BirthDate:      data.BirthDate,
-		Salary:         data.Salary,
-		KTPImageUrl:    data.KTPImage,
-		SelfieImageUrl: data.SelfieImage,
+		Email:      data.Email,
+		NIK:        data.NIK,
+		FullName:   data.FullName,
+		LegalName:  data.LegalName,
+		BirthPlace: data.BirthPlace,
+		BirthDate:  data.BirthDate,
+		Salary:     data.Salary,
 	}
 
 	err := u.db.Transaction(func(tx *gorm.DB) error {
@@ -103,9 +101,19 @@ func (u *mysqlCustomerRepository) Update(
 
 	updateMap := make(map[string]interface{})
 	for i := range fields {
-		updateMap[fields[i]] = values[i]
+		key := fields[i]
+
+		switch key {
+		case "ktp_image":
+			key = "ktp_image_url"
+		case "selfie_image":
+			key = "selfie_image_url"
+		}
+
+		updateMap[key] = values[i]
 	}
 
+	fmt.Print(updateMap)
 	if err := u.db.Model(&customer).Updates(updateMap).Error; err != nil {
 		u.logger.Error("faild to update data customer, err: %+v", err)
 		return nil, err

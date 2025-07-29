@@ -78,7 +78,7 @@ func (ah *authHandler) Login(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(domain.SingleResponse{
-		Code: fiber.StatusUnprocessableEntity,
+		Code: fiber.StatusCreated,
 		Data: domain.TokenResponse{
 			AccessToken: accessToken,
 		},

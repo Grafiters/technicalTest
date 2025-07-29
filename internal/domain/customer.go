@@ -36,6 +36,7 @@ type CustomerInput struct {
 
 type CustomerUpdate struct {
 	Email       string    `json:"email" validate:"required" example:"test@gmail.com"`
+	NIK         int       `json:"nik" validate:"required,len=16,numeric"`
 	FullName    string    `json:"full_name" validate:"required"`
 	LegalName   string    `json:"legal_name" validate:"required"`
 	BirthPlace  string    `json:"birth_place" validate:"required"`

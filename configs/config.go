@@ -9,11 +9,15 @@ import (
 )
 
 var (
-	DataBase  *gorm.DB
-	Redis     *redises.RedisClient
-	JwtConfig *JwtService
-	SecretKey string
-	Logger    *LoggerFormat
+	DataBase       *gorm.DB
+	Redis          *redises.RedisClient
+	JwtConfig      *JwtService
+	SecretKey      string
+	Logger         *LoggerFormat
+	Origin         map[string]bool
+	Minio          *MinioConfig
+	ImageAllowList []string = []string{"png", "jpg", "jpeg"}
+	MaxSizeMB      float64  = 10
 )
 
 func Initialize() error {
@@ -40,6 +44,15 @@ func Initialize() error {
 	JwtConfig = jwt
 
 	SecretKey = "skilltest"
+
+	Origin = LoadAllowedOrigins()
+
+	minio, err := NewMinioConfig()
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	Minio = minio
 
 	return nil
 }
