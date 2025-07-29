@@ -16,6 +16,12 @@ while you want to self generate endpoint documentation you can following this co
 $ swag init --generalInfo ./cmd/api/main.go --output ./cmd/api/docs
 ```
 
+## STRUKTUR ARCHITECTURE AND DATABASE
+![Architecture Diagram](./struktur.png)
+
+## SQL Script
+[sql sript transaction.sql](./transaction.sql)
+
 ## How to run
 ### Specification
 - database: postgres
@@ -52,10 +58,11 @@ $ ./script/task-list.sh db:seed
     $ go run cmd/api/main.go
     ```
 
-5.  access
-    - access endpoint http transaction notification database on ```http://{host}:8000/transaction-notification```
-    - access endpoint http checking status database on ```http://{host}:8000/checking-status```
-    - access documentation you can access on ```http://{host}:8000/api/openapi```
+5.  running worker
+    - running http endoint you can use:
+    ```bash
+    $ go run cmd/workers/main.go
+    ```
 
 ## How To Deploy
 ### Deploy using docker
@@ -74,10 +81,6 @@ $ docker-compose run --rm api sh -C "script/task-list.sh db:create && script/tas
 ```bash
 $ docker-compose up -Vd
 ```
-5.  access
-    - access endpoint http transaction notification database on ```http://{host}:8000/transaction-notification```
-    - access endpoint http checking status database on ```http://{host}:8000/checking-status```
-    - access documentation you can access on ```http://{host}:8000/api/openapi```
 
 # Contact
 For question, please contact telegram [alone](https://t.me/Grafiters)
