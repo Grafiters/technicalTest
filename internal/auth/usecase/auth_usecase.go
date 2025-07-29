@@ -1,0 +1,93 @@
+package usecase
+
+import (
+	"fmt"
+
+	"github.com/Grafiters/archive/configs"
+	"github.com/Grafiters/archive/internal/domain"
+	"github.com/Grafiters/archive/utils"
+	"github.com/gofiber/fiber/v2"
+	"golang.org/x/crypto/bcrypt"
+)
+
+type authUsecase struct {
+	authRepo  domain.AuthRepository
+	limitRepo domain.LimitRepository
+	logger    *configs.LoggerFormat
+}
+
+func NewAuthUsecase(
+	authRepo domain.AuthRepository,
+	limitRepo domain.LimitRepository,
+	logger *configs.LoggerFormat,
+) domain.AuthUsecase {
+	return &authUsecase{
+		authRepo:  authRepo,
+		limitRepo: limitRepo,
+		logger:    logger,
+	}
+}
+
+// Login implements domain.AuthUsecase.
+func (a *authUsecase) Login(ctx *fiber.Ctx, auth *domain.AuthRequest) (*domain.Customer, error) {
+	customer, err := a.authRepo.Login(auth)
+	if err != nil {
+		a.logger.Error("failed to get customer with email, err: ", err)
+		return nil, fmt.Errorf(utils.DataNotFound)
+	}
+
+	err = utils.VerifyPassword(customer.Password, auth.Password)
+
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		return nil, fmt.Errorf(utils.PasswordInvalid)
+	}
+
+	return customer, nil
+}
+
+// Register implements domain.AuthUsecase.
+func (a *authUsecase) Register(ctx *fiber.Ctx, data *domain.RegisterRequest) (*domain.Customer, error) {
+	_, err := a.authRepo.GetByEmail(data.Email)
+	if err == nil {
+		return nil, fmt.Errorf("email already in use")
+	}
+
+	password, err := utils.Hash(data.Password)
+	if err != nil {
+		a.logger.Error("failed to hash password, err: ", err)
+		return nil, fmt.Errorf(utils.ProsessError)
+	}
+
+	data.Password = password
+
+	customer, err := a.authRepo.Register(data)
+	if err != nil {
+		a.logger.Error("failed to register customer, err: ", err)
+		return nil, fmt.Errorf(utils.ProsessError)
+	}
+
+	err = a.handleCerateLimit(customer)
+	if err != nil {
+		a.logger.Error("failed to handle create limit, err: ", err)
+		return nil, fmt.Errorf(utils.ProsessError)
+	}
+
+	return customer, nil
+}
+
+func (a *authUsecase) handleCerateLimit(data *domain.Customer) error {
+	tenorLimit := domain.BuildTenorFactor(data.Salary)
+	limitInput := &domain.BulkLimitInput{
+		CustomerID: data.ID,
+		LimitTenor: tenorLimit,
+	}
+
+	_, err := a.limitRepo.BulkCreateLimit(limitInput)
+	if err != nil {
+		a.logger.Error("failed to bulk create limit, err: ", err)
+		return err
+	}
+
+	return nil
+
+}

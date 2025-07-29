@@ -20,8 +20,71 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/auth": {
+            "post": {
+                "description": "Generate access token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Session",
+                "parameters": [
+                    {
+                        "description": "generate access token",
+                        "name": "auth",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.AuthRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/domain.SingleResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.TokenResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/customer/get": {
             "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
                 "description": "Get Customer data",
                 "consumes": [
                     "application/json"
@@ -69,6 +132,11 @@ const docTemplate = `{
         },
         "/api/customer/update": {
             "put": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
                 "description": "Update Customer data for non crucial data",
                 "consumes": [
                     "application/json"
@@ -127,6 +195,11 @@ const docTemplate = `{
         },
         "/api/customer/update/salary": {
             "put": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
                 "description": "Update Customer data for non crucial data",
                 "consumes": [
                     "application/json"
@@ -183,9 +256,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/create": {
+        "/api/register": {
             "post": {
-                "description": "Create user data",
+                "description": "Register to system",
                 "consumes": [
                     "application/json"
                 ],
@@ -193,17 +266,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Auth"
                 ],
-                "summary": "Create User",
+                "summary": "Register",
                 "parameters": [
                     {
-                        "description": "User to create",
-                        "name": "user",
+                        "description": "register to system",
+                        "name": "auth",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.UserInput"
+                            "$ref": "#/definitions/domain.RegisterRequest"
                         }
                     }
                 ],
@@ -219,7 +292,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/domain.UserResponse"
+                                            "$ref": "#/definitions/domain.CustomerResponse"
                                         }
                                     }
                                 }
@@ -241,9 +314,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/get/email/{email}": {
-            "get": {
-                "description": "Get users data by email",
+        "/api/transaction/create": {
+            "post": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "description": "Create Transaction data for non crucial data",
                 "consumes": [
                     "application/json"
                 ],
@@ -251,14 +329,129 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Transactions"
                 ],
-                "summary": "Get User by email",
+                "summary": "Transaction",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "email",
-                        "name": "email",
+                        "description": "transaction to create",
+                        "name": "transaction",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.TransactionInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/domain.SingleResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.TransactionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/get": {
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "description": "Get Transaction data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Get Transaction",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/domain.PaginationResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.TransactionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/domain.SingleResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaction/get/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "description": "Get Transaction data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transactions"
+                ],
+                "summary": "Get Transaction",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Transaction ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -269,13 +462,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/domain.SingleResponse"
+                                    "$ref": "#/definitions/domain.PaginationResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/domain.UserResponse"
+                                            "$ref": "#/definitions/domain.TransactionResponse"
                                         }
                                     }
                                 }
@@ -297,9 +490,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/get/{id}": {
-            "get": {
-                "description": "Get users data by id",
+        "/api/transaction/installment/pay": {
+            "post": {
+                "security": [
+                    {
+                        "Token": []
+                    }
+                ],
+                "description": "Create Transaction data for non crucial data",
                 "consumes": [
                     "application/json"
                 ],
@@ -307,9 +505,20 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Users"
+                    "Transactions"
                 ],
-                "summary": "Get User by id",
+                "summary": "Transaction",
+                "parameters": [
+                    {
+                        "description": "transaction to pay installment",
+                        "name": "transaction",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.BulkInstallmentUpdate"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -322,7 +531,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/domain.UserResponse"
+                                            "$ref": "#/definitions/domain.TransactionResponse"
                                         }
                                     }
                                 }
@@ -346,12 +555,38 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "domain.AuthRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.BulkInstallmentUpdate": {
+            "type": "object",
+            "properties": {
+                "installment_update": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.InstallmentUpdae"
+                    }
+                },
+                "transaction_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "domain.CustomerResponse": {
             "type": "object",
             "properties": {
-                "bik": {
-                    "type": "integer"
-                },
                 "birth_date": {
                     "type": "string"
                 },
@@ -381,6 +616,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/domain.LimitResponse"
                     }
+                },
+                "nik": {
+                    "type": "integer"
                 },
                 "salary": {
                     "type": "integer"
@@ -437,6 +675,46 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.InstallmentLogRespponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "month": {
+                    "type": "integer"
+                },
+                "paid_at": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.InstallmentUpdae": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "due_date": {
+                    "type": "string"
+                },
+                "month": {
+                    "type": "integer"
+                },
+                "paid_at": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.LimitResponse": {
             "type": "object",
             "properties": {
@@ -457,6 +735,37 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.PaginationResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "number",
+                    "type": "integer"
+                },
+                "data": {
+                    "description": "list of data"
+                },
+                "message": {
+                    "description": "string",
+                    "type": "string"
+                }
+            }
+        },
+        "domain.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.SingleResponse": {
             "type": "object",
             "properties": {
@@ -473,35 +782,74 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.UserInput": {
+        "domain.TokenResponse": {
             "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
             "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "test@gmail.com"
-                },
-                "password": {
+                "access_token": {
                     "type": "string"
                 }
             }
         },
-        "domain.UserResponse": {
+        "domain.TransactionInput": {
             "type": "object",
             "properties": {
+                "admin_fee": {
+                    "type": "integer"
+                },
+                "asset_name": {
+                    "type": "string"
+                },
+                "contract_no": {
+                    "type": "integer"
+                },
+                "installment": {
+                    "type": "integer"
+                },
+                "otr": {
+                    "type": "integer"
+                },
+                "tenor": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.TransactionResponse": {
+            "type": "object",
+            "properties": {
+                "admin_fee": {
+                    "type": "integer"
+                },
+                "asset_name": {
+                    "type": "string"
+                },
+                "contract_no": {
+                    "type": "integer"
+                },
                 "created_at": {
                     "type": "string"
                 },
-                "email": {
-                    "type": "string"
+                "customers": {
+                    "$ref": "#/definitions/domain.CustomerResponse"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "uid": {
+                "installment": {
+                    "type": "integer"
+                },
+                "installment_list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.InstallmentLogRespponse"
+                    }
+                },
+                "limits": {
+                    "$ref": "#/definitions/domain.LimitResponse"
+                },
+                "otr": {
+                    "type": "integer"
+                },
+                "status": {
                     "type": "string"
                 },
                 "updated_at": {

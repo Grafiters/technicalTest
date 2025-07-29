@@ -1,9 +1,26 @@
 basePath: /
 definitions:
+  domain.AuthRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  domain.BulkInstallmentUpdate:
+    properties:
+      installment_update:
+        items:
+          $ref: '#/definitions/domain.InstallmentUpdae'
+        type: array
+      transaction_id:
+        type: integer
+    type: object
   domain.CustomerResponse:
     properties:
-      bik:
-        type: integer
       birth_date:
         type: string
       birth_place:
@@ -24,6 +41,8 @@ definitions:
         items:
           $ref: '#/definitions/domain.LimitResponse'
         type: array
+      nik:
+        type: integer
       salary:
         type: integer
       selfie_image_url:
@@ -62,6 +81,32 @@ definitions:
     required:
     - salary
     type: object
+  domain.InstallmentLogRespponse:
+    properties:
+      amount:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      month:
+        type: integer
+      paid_at:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.InstallmentUpdae:
+    properties:
+      amount:
+        type: integer
+      due_date:
+        type: string
+      month:
+        type: integer
+      paid_at:
+        type: string
+    type: object
   domain.LimitResponse:
     properties:
       amount:
@@ -75,6 +120,27 @@ definitions:
       updated_at:
         type: string
     type: object
+  domain.PaginationResponse:
+    properties:
+      code:
+        description: number
+        type: integer
+      data:
+        description: list of data
+      message:
+        description: string
+        type: string
+    type: object
+  domain.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   domain.SingleResponse:
     properties:
       code:
@@ -86,26 +152,51 @@ definitions:
         description: string
         type: string
     type: object
-  domain.UserInput:
+  domain.TokenResponse:
     properties:
-      email:
-        example: test@gmail.com
+      access_token:
         type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
     type: object
-  domain.UserResponse:
+  domain.TransactionInput:
     properties:
+      admin_fee:
+        type: integer
+      asset_name:
+        type: string
+      contract_no:
+        type: integer
+      installment:
+        type: integer
+      otr:
+        type: integer
+      tenor:
+        type: integer
+    type: object
+  domain.TransactionResponse:
+    properties:
+      admin_fee:
+        type: integer
+      asset_name:
+        type: string
+      contract_no:
+        type: integer
       created_at:
         type: string
-      email:
-        type: string
+      customers:
+        $ref: '#/definitions/domain.CustomerResponse'
       id:
         type: integer
-      uid:
+      installment:
+        type: integer
+      installment_list:
+        items:
+          $ref: '#/definitions/domain.InstallmentLogRespponse'
+        type: array
+      limits:
+        $ref: '#/definitions/domain.LimitResponse'
+      otr:
+        type: integer
+      status:
         type: string
       updated_at:
         type: string
@@ -121,6 +212,41 @@ info:
   title: Fiber Swagger Example API
   version: "1.0"
 paths:
+  /api/auth:
+    post:
+      consumes:
+      - application/json
+      description: Generate access token
+      parameters:
+      - description: generate access token
+        in: body
+        name: auth
+        required: true
+        schema:
+          $ref: '#/definitions/domain.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.TokenResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      summary: Session
+      tags:
+      - Auth
   /api/customer/get:
     get:
       consumes:
@@ -146,6 +272,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
       summary: Get Customer
       tags:
       - Customers
@@ -181,6 +309,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
       summary: Update Customer
       tags:
       - Customers
@@ -216,21 +346,23 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
       summary: Update Customer
       tags:
       - Customers
-  /api/users/create:
+  /api/register:
     post:
       consumes:
       - application/json
-      description: Create user data
+      description: Register to system
       parameters:
-      - description: User to create
+      - description: register to system
         in: body
-        name: user
+        name: auth
         required: true
         schema:
-          $ref: '#/definitions/domain.UserInput'
+          $ref: '#/definitions/domain.RegisterRequest'
       produces:
       - application/json
       responses:
@@ -241,7 +373,7 @@ paths:
             - $ref: '#/definitions/domain.SingleResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/domain.UserResponse'
+                  $ref: '#/definitions/domain.CustomerResponse'
               type: object
         "422":
           description: Unprocessable Entity
@@ -251,48 +383,21 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
-      summary: Create User
+      summary: Register
       tags:
-      - Users
-  /api/users/get/{id}:
-    get:
+      - Auth
+  /api/transaction/create:
+    post:
       consumes:
       - application/json
-      description: Get users data by id
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/domain.SingleResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/domain.UserResponse'
-              type: object
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/domain.SingleResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/domain.SingleResponse'
-      summary: Get User by id
-      tags:
-      - Users
-  /api/users/get/email/{email}:
-    get:
-      consumes:
-      - application/json
-      description: Get users data by email
+      description: Create Transaction data for non crucial data
       parameters:
-      - description: email
-        in: path
-        name: email
+      - description: transaction to create
+        in: body
+        name: transaction
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/domain.TransactionInput'
       produces:
       - application/json
       responses:
@@ -303,7 +408,7 @@ paths:
             - $ref: '#/definitions/domain.SingleResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/domain.UserResponse'
+                  $ref: '#/definitions/domain.TransactionResponse'
               type: object
         "422":
           description: Unprocessable Entity
@@ -313,9 +418,114 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/domain.SingleResponse'
-      summary: Get User by email
+      security:
+      - Token: []
+      summary: Transaction
       tags:
-      - Users
+      - Transactions
+  /api/transaction/get:
+    get:
+      consumes:
+      - application/json
+      description: Get Transaction data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.PaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.TransactionResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
+      summary: Get Transaction
+      tags:
+      - Transactions
+  /api/transaction/get/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get Transaction data
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.PaginationResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.TransactionResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
+      summary: Get Transaction
+      tags:
+      - Transactions
+  /api/transaction/installment/pay:
+    post:
+      consumes:
+      - application/json
+      description: Create Transaction data for non crucial data
+      parameters:
+      - description: transaction to pay installment
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/domain.BulkInstallmentUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SingleResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.TransactionResponse'
+              type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.SingleResponse'
+      security:
+      - Token: []
+      summary: Transaction
+      tags:
+      - Transactions
 schemes:
 - http
 - https

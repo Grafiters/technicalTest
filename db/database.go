@@ -140,7 +140,7 @@ func Migrate(direction string, table string) error {
 
 func GenerateMigration(name string) error {
 	path := "db/migration"
-	migrateCmd := exec.Command("migrate", "create", "-ext", "sql", "-dir", path, fmt.Sprintf(name+"_table"))
+	migrateCmd := exec.Command("migrate", "create", "-ext", "sql", "-dir", path, fmt.Sprintf("%s", name+"_table"))
 
 	migrateCmd.Stdout = os.Stdout
 	migrateCmd.Stderr = os.Stderr

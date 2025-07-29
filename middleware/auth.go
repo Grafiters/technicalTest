@@ -30,28 +30,22 @@ func Authenticate(c *fiber.Ctx) error {
 		})
 	}
 
-	signature := c.Get("X-Signature")
-	if len(signature) == 0 {
-		return c.Status(fiber.StatusUnauthorized).JSON(response.Errors{
-			Code:   fiber.StatusUnauthorized,
-			Errors: []string{utils.SignatureMissing},
-		})
-	}
 	token = strings.Replace(token, configs.Prefix, "", -1)
-	err := configs.JwtConfig.DecodeTokenSession(token, oauthData)
+	err := configs.JwtConfig.DecodeTokenSession(token, &oauthData)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"errors": []string{utils.JwtDecodeAndVerify},
 		})
 	}
 
-	configs.DataBase.Where("uid = ?", oauthData.IDF).First(&member)
+	configs.DataBase.Where("email = ?", oauthData.IDF).First(&member)
 	if member == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(&response.Errors{
 			Code:   fiber.StatusUnauthorized,
 			Errors: []string{utils.JwtDecodeAndVerify},
 		})
 	}
+
 	c.Locals("CurrentUser", member)
 
 	return c.Next()
